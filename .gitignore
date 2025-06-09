@@ -1,0 +1,13 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# Dependency lock file
+package-lock.json
+
+# Ignore webpack cache
+.cache/
+
+
