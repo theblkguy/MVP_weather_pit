@@ -1,0 +1,24 @@
+{
+  "name": "mvp_weather_pit",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theblkguy/MVP_weather_pit.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/theblkguy/MVP_weather_pit/issues"
+  },
+  "homepage": "https://github.com/theblkguy/MVP_weather_pit#readme",
+  "devDependencies": {
+    "cli": "^1.0.1",
+    "webpack": "^5.99.9"
+  }
+}
