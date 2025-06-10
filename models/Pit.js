@@ -1,10 +1,13 @@
 import mongoose from 'mongoose';
 const { Schema, model } = mongoose;
 
-const userSchema = new Schema ({
+const pitSchema = new Schema ({
   id: Number,
-  username: String
+  pitname: String,
+  created_at: Date,
+  forecast: String,
+  temp: Number
 })
 
-const User = model('User', userSchema);
-export default User;
+const Pit = model('Pit', userSchema);
+export default Pit;
