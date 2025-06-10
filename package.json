@@ -19,13 +19,14 @@
   },
   "homepage": "https://github.com/theblkguy/MVP_weather_pit#readme",
   "devDependencies": {
+    "@babel/preset-react": "^7.27.1",
     "cli": "^1.0.1",
+    "mongodb": "6.17",
     "webpack": "^5.99.9"
   },
   "dependencies": {
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
-    "@babel/preset-react": "^7.27.1",
     "lodash": "^4.17.21"
   }
 }
