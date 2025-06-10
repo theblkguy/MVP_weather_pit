@@ -21,12 +21,23 @@
   "devDependencies": {
     "@babel/preset-react": "^7.27.1",
     "cli": "^1.0.1",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "express": "^5.1.0",
     "mongodb": "6.17",
+    "nodemon": "^3.1.10",
     "webpack": "^5.99.9"
   },
   "dependencies": {
+    "22": "^0.0.0",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
-    "lodash": "^4.17.21"
-  }
+    "lodash": "^4.17.21",
+    "mongoose": "^8.15.1"
+  },
+  "main": "webpack.config.js"
 }
