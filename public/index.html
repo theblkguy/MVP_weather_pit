@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Pit - Interactive Weather Visualization</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+      color: #ffffff;
+      overflow: hidden;
+    }
+    
+    #app {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    #controls {
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid #333;
+      z-index: 10;
+    }
+    
+    #controls h1 {
+      margin-bottom: 15px;
+      font-size: 24px;
+      background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .control-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    
+    input[type="text"] {
+      padding: 10px 15px;
+      border: 2px solid #444;
+      border-radius: 8px;
+      background: #2a2a2a;
+      color: #fff;
+      font-size: 14px;
+      flex: 1;
+      min-width: 200px;
+      transition: border-color 0.3s;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #4facfe;
+    }
+    
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    button.stop {
+      background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    #weather-info {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+    
+    .weather-stat {
+      padding: 8px 15px;
+      background: rgba(79, 172, 254, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(79, 172, 254, 0.3);
+    }
+    
+    .weather-stat strong {
+      color: #4facfe;
+      margin-right: 5px;
+    }
+    
+    #pit-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      color: #4facfe;
+    }
+    
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    
+    .status.error {
+      background: rgba(245, 87, 108, 0.2);
+      border: 1px solid rgba(245, 87, 108, 0.5);
+      color: #f5576c;
+    }
+    
+    .status.success {
+      background: rgba(79, 254, 154, 0.2);
+      border: 1px solid rgba(79, 254, 154, 0.5);
+      color: #4ffe9a;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    #volume-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+      max-width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="controls">
+      <h1>🌦️ Weather Pit</h1>
+      
+      <div class="control-row">
+        <input 
+          type="text" 
+          id="location-input" 
+          placeholder="Enter city name or coordinates (e.g., 'London' or '51.5074,-0.1278')"
+          value="London"
+        />
+        <button id="fetch-weather-btn">Fetch Weather</button>
+        <button id="start-btn" disabled>Start Pit</button>
+        <button id="stop-btn" class="stop" disabled>Stop Pit</button>
+      </div>
+      
+      <div class="control-row" id="volume-control">
+        <label for="volume-slider">Volume:</label>
+        <input type="range" id="volume-slider" min="0" max="100" value="30" />
+        <span id="volume-value">30%</span>
+      </div>
+      
+      <div id="weather-info" class="hidden"></div>
+      
+      <div id="status" class="status hidden"></div>
+    </div>
+    
+    <div id="pit-container">
+      <div id="loading" class="hidden">Loading...</div>
+    </div>
+  </div>
+  
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

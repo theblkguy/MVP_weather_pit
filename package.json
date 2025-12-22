@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "dev": "nodemon index.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "type": "module",
   "repository": {
@@ -38,9 +39,12 @@
     "22": "^0.0.0",
     "@babel/core": "^7.27.4",
     "@babel/preset-env": "^7.27.2",
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
     "live-server": "^1.2.2",
     "lodash": "^4.17.21",
-    "mongoose": "^8.15.1"
+    "mongoose": "^8.15.1",
+    "three": "^0.182.0"
   },
   "main": "webpack.config.js"
 }
