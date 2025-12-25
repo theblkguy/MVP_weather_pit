@@ -19,6 +19,18 @@ export class AudioEngine {
     
     // Currently playing notes (to avoid overlapping sounds)
     this.activeNotes = new Map();
+    
+    // ADSR Envelope parameters (in seconds)
+    // Attack: Time to reach peak volume
+    // Decay: Time to fall from peak to sustain level
+    // Sustain: Level to hold at (0.0 to 1.0, as fraction of peak)
+    // Release: Time to fade from sustain level to silence
+    this.adsr = {
+      attack: 0.01,   // Quick attack
+      decay: 0.1,     // Fast decay
+      sustain: 0.7,   // Hold at 70% of peak volume
+      release: 0.8    // Longer release for nice fade-out
+    };
   }
   
   /**
@@ -112,15 +124,26 @@ export class AudioEngine {
     filter.connect(gainNode);
     gainNode.connect(this.masterGain);
     
-    // Envelope: quick attack, sustain, then decay
+    // ADSR Envelope implementation
+    const { attack, decay, sustain, release } = this.adsr;
+    const sustainVolume = volume * this.adsr.sustain;
+    
+    // Calculate timing
+    const attackEnd = now + attack;
+    const decayEnd = attackEnd + decay;
+    const sustainEnd = decayEnd + Math.max(0, duration - attack - decay);
+    const releaseEnd = sustainEnd + release;
+    
+    // Apply ADSR envelope
     gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(volume, now + 0.01); // Attack
-    gainNode.gain.setValueAtTime(volume, now + duration * 0.7); // Sustain
-    gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Decay
+    gainNode.gain.linearRampToValueAtTime(volume, attackEnd); // Attack: 0 to peak
+    gainNode.gain.exponentialRampToValueAtTime(sustainVolume, decayEnd); // Decay: peak to sustain
+    gainNode.gain.setValueAtTime(sustainVolume, sustainEnd); // Sustain: hold at sustain level
+    gainNode.gain.exponentialRampToValueAtTime(0.001, releaseEnd); // Release: sustain to silence
     
     // Start and schedule stop
     oscillator.start(now);
-    oscillator.stop(now + duration);
+    oscillator.stop(releaseEnd);
     
     // Clean up after note finishes
     oscillator.onended = () => {
@@ -143,8 +166,11 @@ export class AudioEngine {
       
       try {
         const now = this.audioContext.currentTime;
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-        oscillator.stop(now + 0.05);
+        // Use the configured release time for smooth fade-out
+        gainNode.gain.cancelScheduledValues(now); // Cancel any pending changes
+        gainNode.gain.setValueAtTime(gainNode.gain.value, now); // Set current value
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + this.adsr.release);
+        oscillator.stop(now + this.adsr.release);
       } catch (e) {
         // Note might have already stopped
       }
@@ -161,6 +187,29 @@ export class AudioEngine {
     if (this.masterGain) {
       this.masterGain.gain.value = Math.max(0, Math.min(1, volume));
     }
+  }
+  
+  /**
+   * Set ADSR envelope parameters
+   * @param {Object} adsrParams - Object with attack, decay, sustain, release properties
+   * @param {number} adsrParams.attack - Attack time in seconds
+   * @param {number} adsrParams.decay - Decay time in seconds
+   * @param {number} adsrParams.sustain - Sustain level (0.0 to 1.0)
+   * @param {number} adsrParams.release - Release time in seconds
+   */
+  setADSR(adsrParams) {
+    if (adsrParams.attack !== undefined) this.adsr.attack = Math.max(0, adsrParams.attack);
+    if (adsrParams.decay !== undefined) this.adsr.decay = Math.max(0, adsrParams.decay);
+    if (adsrParams.sustain !== undefined) this.adsr.sustain = Math.max(0, Math.min(1, adsrParams.sustain));
+    if (adsrParams.release !== undefined) this.adsr.release = Math.max(0, adsrParams.release);
+  }
+  
+  /**
+   * Get current ADSR parameters
+   * @returns {Object} Current ADSR settings
+   */
+  getADSR() {
+    return { ...this.adsr };
   }
   
   /**

@@ -15,16 +15,16 @@ export class WeatherPit {
     this.camera = null;
     this.renderer = null;
     
-    // Pit dimensions
+    // Pit dimensions - expanded space for balls to bounce around
     this.pitBounds = {
-      width: 20,
-      height: 15,
-      depth: 20
+      width: 60,
+      height: 40,
+      depth: 60
     };
     
     // Ball management
     this.balls = [];
-    this.maxBalls = 25; // Maximum number of balls
+    this.maxBalls = 50; // Maximum number of balls
     this.spawnTimer = 0;
     this.spawnInterval = this.calculateSpawnInterval();
     
@@ -46,17 +46,17 @@ export class WeatherPit {
     // Scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0a0a0a);
-    this.scene.fog = new THREE.Fog(0x0a0a0a, 20, 50);
+    this.scene.fog = new THREE.Fog(0x0a0a0a, 30, 80);
     
-    // Camera
+    // Camera - position to view the expanded pit
     this.camera = new THREE.PerspectiveCamera(
       75,
       this.container.clientWidth / this.container.clientHeight,
       0.1,
       1000
     );
-    this.camera.position.set(0, 12, 25);
-    this.camera.lookAt(0, 5, 0);
+    this.camera.position.set(0, 35, 70);
+    this.camera.lookAt(0, 15, 0);
     
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -83,31 +83,31 @@ export class WeatherPit {
    */
   setupLights() {
     // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     this.scene.add(ambientLight);
     
     // Main directional light
-    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    mainLight.position.set(10, 20, 10);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    mainLight.position.set(20, 50, 20);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     mainLight.shadow.camera.near = 0.5;
-    mainLight.shadow.camera.far = 50;
-    mainLight.shadow.camera.left = -25;
-    mainLight.shadow.camera.right = 25;
-    mainLight.shadow.camera.top = 25;
-    mainLight.shadow.camera.bottom = -25;
+    mainLight.shadow.camera.far = 100;
+    mainLight.shadow.camera.left = -80;
+    mainLight.shadow.camera.right = 80;
+    mainLight.shadow.camera.top = 80;
+    mainLight.shadow.camera.bottom = -80;
     this.scene.add(mainLight);
     
     // Fill light
-    const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
-    fillLight.position.set(-10, 10, -10);
+    const fillLight = new THREE.DirectionalLight(0x8888ff, 0.4);
+    fillLight.position.set(-20, 25, -20);
     this.scene.add(fillLight);
     
     // Point light for dramatic effect
-    const pointLight = new THREE.PointLight(0xffffff, 0.5, 30);
-    pointLight.position.set(0, 10, 0);
+    const pointLight = new THREE.PointLight(0xffffff, 0.6, 100);
+    pointLight.position.set(0, 30, 0);
     this.scene.add(pointLight);
   }
   
@@ -185,7 +185,7 @@ export class WeatherPit {
     if (this.balls.length >= this.maxBalls) return;
     
     const noteIndex = this.balls.length % 25; // Cycle through 0-24
-    const ball = new WeatherBall(this.scene, this.weatherData, noteIndex, this.pitBounds);
+    const ball = new WeatherBall(this.scene, this.weatherData, noteIndex, this.pitBounds, this.audioEngine);
     this.balls.push(ball);
   }
   

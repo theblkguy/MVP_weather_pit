@@ -25,10 +25,10 @@ export async function fetchWeather(location) {
     // Check if location is coordinates (lat,lon format)
     if (location.includes(',')) {
       const [lat, lon] = location.split(',');
-      url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+      url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`;
     } else {
       // Location is a city name
-      url = `${BASE_URL}/weather?q=${location}&appid=${API_KEY}&units=metric`;
+      url = `${BASE_URL}/weather?q=${location}&appid=${API_KEY}&units=imperial`;
     }
     
     console.log('Fetching weather from:', url.replace(API_KEY, 'API_KEY'));
@@ -100,7 +100,7 @@ function determineScale(condition, cloudCover, temp) {
   // Nice weather conditions -> Major scale
   const niceConditions = ['Clear', 'Clouds'];
   const isNiceCondition = niceConditions.includes(condition);
-  const isWarm = temp > 15; // Above 15°C is considered warm
+  const isWarm = temp > 59; // Above 59°F (15°C) is considered warm
   const isMostlyClear = cloudCover < 50;
   
   // Major scale if: nice condition AND (warm OR mostly clear)
@@ -113,28 +113,28 @@ function determineScale(condition, cloudCover, temp) {
 function getMockWeatherData(location) {
   const mockConfigs = {
     'London': {
-      temp: 12, humidity: 75, windSpeed: 5.2, pressure: 1015,
-      precipitation: 2.5, cloudCover: 80, condition: 'Rain', 
+      temp: 54, humidity: 75, windSpeed: 11.6, pressure: 1015,
+      precipitation: 0.1, cloudCover: 80, condition: 'Rain', 
       description: 'light rain', precipitationType: 'rain'
     },
     'Dubai': {
-      temp: 35, humidity: 45, windSpeed: 3.1, pressure: 1010,
+      temp: 95, humidity: 45, windSpeed: 6.9, pressure: 1010,
       precipitation: 0, cloudCover: 10, condition: 'Clear',
       description: 'clear sky', precipitationType: 'none'
     },
     'Iceland': {
-      temp: -2, humidity: 85, windSpeed: 8.5, pressure: 1005,
-      precipitation: 5.0, cloudCover: 95, condition: 'Snow',
+      temp: 28, humidity: 85, windSpeed: 19.0, pressure: 1005,
+      precipitation: 0.2, cloudCover: 95, condition: 'Snow',
       description: 'light snow', precipitationType: 'snow'
     },
     'Singapore': {
-      temp: 28, humidity: 90, windSpeed: 2.5, pressure: 1012,
-      precipitation: 8.0, cloudCover: 70, condition: 'Rain',
+      temp: 82, humidity: 90, windSpeed: 5.6, pressure: 1012,
+      precipitation: 0.3, cloudCover: 70, condition: 'Rain',
       description: 'heavy rain', precipitationType: 'rain'
     },
     'default': {
-      temp: 20, humidity: 60, windSpeed: 4.0, pressure: 1013,
-      precipitation: 1.0, cloudCover: 50, condition: 'Clouds',
+      temp: 68, humidity: 60, windSpeed: 8.9, pressure: 1013,
+      precipitation: 0.04, cloudCover: 50, condition: 'Clouds',
       description: 'scattered clouds', precipitationType: 'none'
     }
   };

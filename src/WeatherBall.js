@@ -5,11 +5,12 @@ import * as THREE from '../node_modules/three/build/three.module.js';
  * All balls share the same weather-influenced properties
  */
 export class WeatherBall {
-  constructor(scene, weatherData, noteIndex, pitBounds) {
+  constructor(scene, weatherData, noteIndex, pitBounds, audioEngine) {
     this.scene = scene;
     this.weatherData = weatherData;
     this.noteIndex = noteIndex; // 0-24, determines which note this ball plays
     this.pitBounds = pitBounds;
+    this.audioEngine = audioEngine;
     
     // Physics properties
     this.position = new THREE.Vector3(
@@ -62,40 +63,62 @@ export class WeatherBall {
   }
   
   /**
-   * Color based on cloud cover and conditions
-   * Clear = bright warm colors
-   * Cloudy/gloomy = cool dark colors
+   * Color based on temperature and weather conditions
+   * Hot temps = warm palette (reds, oranges, yellows)
+   * Cold temps = cool palette (blues, purples, cyans)
+   * Each ball gets a varied color from the palette
    */
   calculateColor() {
-    const { cloudCover, condition, temp } = this.weatherData;
+    const { temp, condition } = this.weatherData;
     
     let hue, saturation, lightness;
     
-    if (condition === 'Clear') {
-      // Warm colors (yellow to orange)
-      hue = 40 + (temp / 40) * 20; // 40-60° hue (yellow-orange range)
-      saturation = 80 + Math.random() * 20;
+    // Determine if temperature is hot or cold
+    // Cold: < 50°F, Moderate: 50-75°F, Hot: > 75°F
+    if (temp < 50) {
+      // COLD PALETTE - Blues, purples, cyans
+      const coldHues = [180, 200, 220, 240, 260, 280]; // Cyan to blue to purple
+      hue = coldHues[Math.floor(Math.random() * coldHues.length)];
+      hue += (Math.random() - 0.5) * 15; // Add variation
+      saturation = 60 + Math.random() * 30;
+      lightness = 45 + Math.random() * 25;
+      
+      // Snow makes it lighter
+      if (condition === 'Snow') {
+        saturation -= 20;
+        lightness += 15;
+      }
+    } else if (temp > 75) {
+      // HOT PALETTE - Reds, oranges, yellows
+      const hotHues = [0, 15, 30, 45, 60]; // Red to orange to yellow
+      hue = hotHues[Math.floor(Math.random() * hotHues.length)];
+      hue += (Math.random() - 0.5) * 10; // Add variation
+      saturation = 70 + Math.random() * 30;
       lightness = 50 + Math.random() * 20;
-    } else if (condition === 'Rain' || condition === 'Drizzle') {
-      // Cool blues
-      hue = 200 + Math.random() * 40;
-      saturation = 50 + Math.random() * 30;
-      lightness = 30 + Math.random() * 30;
-    } else if (condition === 'Snow') {
-      // White/light blue
-      hue = 200;
-      saturation = 20 + Math.random() * 30;
-      lightness = 70 + Math.random() * 20;
-    } else if (condition === 'Clouds') {
-      // Grays to blues based on cloud cover
-      hue = 210 + Math.random() * 30;
-      saturation = 20 + (cloudCover / 100) * 40;
-      lightness = 40 - (cloudCover / 100) * 20;
+      
+      // Clear skies make it more vibrant
+      if (condition === 'Clear') {
+        saturation += 10;
+        lightness += 10;
+      }
     } else {
-      // Default varied colors
-      hue = Math.random() * 360;
-      saturation = 60 + Math.random() * 40;
-      lightness = 40 + Math.random() * 30;
+      // MODERATE PALETTE - Greens, teals, warm colors
+      const moderateHues = [80, 100, 120, 160, 40]; // Yellow-green to teal
+      hue = moderateHues[Math.floor(Math.random() * moderateHues.length)];
+      hue += (Math.random() - 0.5) * 20; // More variation
+      saturation = 50 + Math.random() * 40;
+      lightness = 45 + Math.random() * 25;
+    }
+    
+    // Rain makes colors slightly darker and more saturated
+    if (condition === 'Rain' || condition === 'Drizzle') {
+      saturation += 10;
+      lightness -= 10;
+    }
+    
+    // Cloudy conditions desaturate slightly
+    if (condition === 'Clouds') {
+      saturation -= 15;
     }
     
     return new THREE.Color(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
@@ -110,9 +133,9 @@ export class WeatherBall {
     const minSpeed = 1.0;
     const maxSpeed = 3.0;
     
-    // Normalize temp (-20°C to 40°C range)
-    const normalizedTemp = Math.max(-20, Math.min(40, temp));
-    const tempFactor = (normalizedTemp + 20) / 60; // 0 to 1
+    // Normalize temp (0°F to 110°F range)
+    const normalizedTemp = Math.max(0, Math.min(110, temp));
+    const tempFactor = normalizedTemp / 110; // 0 to 1
     
     return minSpeed + tempFactor * (maxSpeed - minSpeed);
   }
@@ -138,9 +161,10 @@ export class WeatherBall {
       color: this.color,
       transparent: true,
       opacity: 1.0,
-      shininess: 80,
+      shininess: 100,
       emissive: this.color,
-      emissiveIntensity: 0.2
+      emissiveIntensity: 0.3,
+      specular: 0xffffff
     });
     
     this.mesh = new THREE.Mesh(geometry, material);
@@ -221,9 +245,24 @@ export class WeatherBall {
     const restitution = 0.8; // Bounciness
     
     // Floor
-    if (this.position.y - this.size < 0) {
+    const isOnGround = this.position.y - this.size < 0;
+    if (isOnGround) {
+      // Capture velocity before modifying it to detect bounce
+      const wasMovingDown = this.velocity.y < 0;
+      const bounceVelocity = Math.abs(this.velocity.y);
+      
       this.position.y = this.size;
       this.velocity.y *= -restitution;
+      
+      // Play sound on ground bounce (only if ball was moving downward)
+      if (wasMovingDown && this.audioEngine && bounceVelocity > 0.1) {
+        this.audioEngine.playNote(
+          this.noteIndex,
+          this.weatherData.isMajorScale,
+          bounceVelocity,
+          0.2 // Shorter duration for ground bounces
+        );
+      }
     }
     
     // Walls
