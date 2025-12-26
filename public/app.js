@@ -91,7 +91,14 @@ class App {
       
     } catch (error) {
       console.error('Error fetching weather:', error);
-      this.showStatus(`Error: ${error.message}`, 'error');
+      
+      // Try to extract more detailed error message if available
+      let errorMessage = error.message;
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      this.showStatus(`Error: ${errorMessage}`, 'error');
     } finally {
       this.showLoading(false);
       this.fetchWeatherBtn.disabled = false;

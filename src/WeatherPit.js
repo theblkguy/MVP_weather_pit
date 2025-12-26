@@ -17,9 +17,9 @@ export class WeatherPit {
     
     // Pit dimensions - expanded space for balls to bounce around
     this.pitBounds = {
-      width: 60,
-      height: 40,
-      depth: 60
+      width: 120,
+      height: 80,
+      depth: 120
     };
     
     // Ball management
@@ -46,17 +46,17 @@ export class WeatherPit {
     // Scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0a0a0a);
-    this.scene.fog = new THREE.Fog(0x0a0a0a, 30, 80);
+    this.scene.fog = new THREE.Fog(0x0a0a0a, 80, 200);
     
     // Camera - position to view the expanded pit
     this.camera = new THREE.PerspectiveCamera(
-      75,
+      60,
       this.container.clientWidth / this.container.clientHeight,
       0.1,
       1000
     );
-    this.camera.position.set(0, 35, 70);
-    this.camera.lookAt(0, 15, 0);
+    this.camera.position.set(0, 100, 180);
+    this.camera.lookAt(0, 30, 0);
     
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -88,26 +88,26 @@ export class WeatherPit {
     
     // Main directional light
     const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    mainLight.position.set(20, 50, 20);
+    mainLight.position.set(60, 120, 60);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     mainLight.shadow.camera.near = 0.5;
-    mainLight.shadow.camera.far = 100;
-    mainLight.shadow.camera.left = -80;
-    mainLight.shadow.camera.right = 80;
-    mainLight.shadow.camera.top = 80;
-    mainLight.shadow.camera.bottom = -80;
+    mainLight.shadow.camera.far = 250;
+    mainLight.shadow.camera.left = -180;
+    mainLight.shadow.camera.right = 180;
+    mainLight.shadow.camera.top = 180;
+    mainLight.shadow.camera.bottom = -180;
     this.scene.add(mainLight);
     
     // Fill light
     const fillLight = new THREE.DirectionalLight(0x8888ff, 0.4);
-    fillLight.position.set(-20, 25, -20);
+    fillLight.position.set(-60, 60, -60);
     this.scene.add(fillLight);
     
     // Point light for dramatic effect
-    const pointLight = new THREE.PointLight(0xffffff, 0.6, 100);
-    pointLight.position.set(0, 30, 0);
+    const pointLight = new THREE.PointLight(0xffffff, 0.6, 250);
+    pointLight.position.set(0, 70, 0);
     this.scene.add(pointLight);
   }
   
@@ -179,14 +179,37 @@ export class WeatherPit {
   }
   
   /**
-   * Spawn a new ball
+   * Calculate how many balls to spawn per spawn event based on weather
+   */
+  calculateBallsPerSpawn() {
+    const { precipitation, cloudCover } = this.weatherData;
+    
+    // Base spawn: 3 balls
+    let ballsPerSpawn = 3;
+    
+    // More precipitation = more balls (up to +3 more)
+    ballsPerSpawn += Math.floor(Math.min(precipitation * 10, 3));
+    
+    // More cloud cover = slightly more balls (up to +1 more)
+    ballsPerSpawn += Math.floor(cloudCover / 60);
+    
+    // Cap between 3 and 7 balls per spawn
+    return Math.max(3, Math.min(7, ballsPerSpawn));
+  }
+  
+  /**
+   * Spawn multiple balls at once
    */
   spawnBall() {
-    if (this.balls.length >= this.maxBalls) return;
+    const ballsPerSpawn = this.calculateBallsPerSpawn();
     
-    const noteIndex = this.balls.length % 25; // Cycle through 0-24
-    const ball = new WeatherBall(this.scene, this.weatherData, noteIndex, this.pitBounds, this.audioEngine);
-    this.balls.push(ball);
+    for (let i = 0; i < ballsPerSpawn; i++) {
+      if (this.balls.length >= this.maxBalls) return;
+      
+      const noteIndex = this.balls.length % 25; // Cycle through 0-24
+      const ball = new WeatherBall(this.scene, this.weatherData, noteIndex, this.pitBounds, this.audioEngine);
+      this.balls.push(ball);
+    }
   }
   
   /**
@@ -245,13 +268,13 @@ export class WeatherPit {
     ball1.position.sub(separation);
     ball2.position.add(separation);
     
-    // Play sound for both balls
+    // Play sound for collisions - use the other ball's note (exchange notes)
     const collisionVelocity = Math.abs(velocityAlongNormal);
-    this.audioEngine.playNote(ball1.noteIndex, this.weatherData.isMajorScale, collisionVelocity, 0.3);
+    this.audioEngine.playNote(ball2.noteIndex, this.weatherData.isMajorScale, collisionVelocity, 0.3);
     
     // Small delay for the second note to create harmony
     setTimeout(() => {
-      this.audioEngine.playNote(ball2.noteIndex, this.weatherData.isMajorScale, collisionVelocity * 0.8, 0.3);
+      this.audioEngine.playNote(ball1.noteIndex, this.weatherData.isMajorScale, collisionVelocity * 0.8, 0.3);
     }, 20);
   }
   

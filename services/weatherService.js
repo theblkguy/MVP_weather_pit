@@ -43,6 +43,15 @@ export async function fetchWeather(location) {
     if (error.response) {
       console.error('Response status:', error.response.status);
       console.error('Response data:', error.response.data);
+      
+      // Provide more helpful error messages
+      if (error.response.status === 404) {
+        throw new Error(`Location "${location}" not found. Please check the spelling or try coordinates (lat,lon).`);
+      } else if (error.response.status === 401) {
+        throw new Error('Invalid API key. Please check your OPENWEATHER_API_KEY in .env file.');
+      } else if (error.response.data && error.response.data.message) {
+        throw new Error(`Weather API error: ${error.response.data.message}`);
+      }
     }
     throw new Error(`Failed to fetch weather for ${location}: ${error.message}`);
   }
@@ -52,24 +61,32 @@ export async function fetchWeather(location) {
  * Process raw OpenWeatherMap data into our app format
  */
 function processWeatherData(data) {
+  // Validate required data structure
+  if (!data.main || !data.weather || !data.weather[0]) {
+    throw new Error('Invalid weather data received from API');
+  }
+  
   const temp = data.main.temp;
-  const humidity = data.main.humidity;
-  const windSpeed = data.wind.speed;
-  const pressure = data.main.pressure;
-  const cloudCover = data.clouds.all;
+  const humidity = data.main.humidity || 0;
+  const windSpeed = (data.wind && data.wind.speed) || 0;
+  const pressure = data.main.pressure || 1013; // Default to standard atmospheric pressure
+  const cloudCover = (data.clouds && data.clouds.all) || 0;
   const condition = data.weather[0].main; // Clear, Clouds, Rain, Snow, etc.
-  const description = data.weather[0].description;
+  const description = data.weather[0].description || condition;
   
   // Calculate precipitation (OpenWeather doesn't always provide this)
   // Rain and snow volumes are in mm for last 1h or 3h
+  // Convert mm to inches for display (1 mm = 0.0393701 inches)
   let precipitation = 0;
   let precipitationType = 'none';
   
   if (data.rain) {
-    precipitation = data.rain['1h'] || data.rain['3h'] || 0;
+    const precipitationMm = data.rain['1h'] || data.rain['3h'] || 0;
+    precipitation = precipitationMm * 0.0393701; // Convert mm to inches
     precipitationType = 'rain';
   } else if (data.snow) {
-    precipitation = data.snow['1h'] || data.snow['3h'] || 0;
+    const precipitationMm = data.snow['1h'] || data.snow['3h'] || 0;
+    precipitation = precipitationMm * 0.0393701; // Convert mm to inches
     precipitationType = 'snow';
   }
   
@@ -77,8 +94,8 @@ function processWeatherData(data) {
   const isMajorScale = determineScale(condition, cloudCover, temp);
   
   return {
-    location: data.name,
-    country: data.sys.country,
+    location: data.name || 'Unknown',
+    country: (data.sys && data.sys.country) || 'Unknown',
     temp,
     humidity,
     windSpeed,
@@ -89,7 +106,7 @@ function processWeatherData(data) {
     description,
     precipitationType,
     isMajorScale,
-    timestamp: new Date(data.dt * 1000)
+    timestamp: new Date((data.dt || Date.now() / 1000) * 1000)
   };
 }
 
